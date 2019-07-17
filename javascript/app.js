@@ -31,36 +31,42 @@ var budgetController = (function () {
 
 
 })();
-
 var UIController = (function () {
-
   var DOMstrings = {
     inputType: '.add__type',
     inputDescription: '.add__description',
-    inputValue: '.add__value'
+    inputValue: '.add__value',
+    inputBtn: '.add__btn'
   }
   //writing a method/function that will be used in another controller. We make this public method/function. It has to be in this iife that will return.
   return {
-
     getinput: function () {
-
-
       return {
-
         type: document.querySelector(DOMstrings.inputType).value,  // will be either inc or exp
         description: document.querySelector(DOMstrings.inputDescription).value,
         value: document.querySelector(DOMstrings.inputValue).value
-        
-        
       }
+    },
+    //exposing the DOMstrings object into the public
+    getDOMstrings: function () {
+      return DOMstrings;
     }
-    
   };
-
 })();
 // Global App Controller....
 // Set up the event listener for our input button in our controller because this the central place where I want to decide, what I want to control on each event and then delegate these tasks to the other controls.
 var controller = (function (budgetCtrl, UICtrl) {
+  var setupEventListeners = function () {
+    // Need DOM elements for our event listeners
+    var DOM = UICtrl.getDOMstrings();
+    //call back. The addEventListener will call it for us when someone clicks the button
+    document.querySelector(DOM.inputBtn).addEventListener('click', ctrlAddItem)
+    document.addEventListener('keypress', function (event) {
+      if (event.keyCode === 13 || event.which === 13) {
+        ctrlAddItem();
+      }
+    })
+  }
   var ctrlAddItem = function () {
     // 1. Get the field input data
     var input = UICtrl.getinput();
@@ -69,17 +75,8 @@ var controller = (function (budgetCtrl, UICtrl) {
     // 3. Add the item to the UI
     // 4. Calculate the budget
     // 5. Display the budget on the UI
-    
-  }
-  //call back. The addEventListener will call it for us when someone clicks the button
-  document.querySelector('.add__btn').addEventListener('click', ctrlAddItem)
-
-  document.addEventListener('keypress', function (event) {
-    if (event.keyCode === 13 || event.which === 13) {
-      ctrlAddItem();
-    }
-  })
-
+  };
 })(budgetController, UIController);
+
 
 
