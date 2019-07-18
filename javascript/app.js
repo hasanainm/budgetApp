@@ -28,6 +28,59 @@
 // })(budgetController, UIController);
 
 var budgetController = (function () {
+  //Need a data model for expenses and incomes here. 
+  //I chose to create objects here through the expense function constructor because there will be alot of expenses.
+  var Expense = function (id, description, value) {
+    this.id = id;
+    this.description = description;
+    this.value = value;
+  };
+  var Income = function (id, description, value) {
+    this.id = id;
+    this.description = description;
+    this.value = value;
+  };
+  // data object structure for creating a new item 
+  var data = {
+    allItems: {
+      exp: [],
+      inc: [],
+    },
+    totals: {
+      exp: 0,
+      inc: 0
+    }
+  };
+  //this is for our public methods
+  return {
+    addItem: function (type, des, val) {
+      var newItem, ID
+      //unique number we want to assign to each new item that we put either in the income or expense array for the allitems
+      //Create new ID
+      if(data.allItems[type].length > 0) {
+
+        ID = data.allItems[type][data.allItems[type].length - 1].id + 1;
+        console.log(ID);
+      }else{
+        ID = 0;
+        console.log(ID);
+      }
+      //if the string is 'exp', then we want to create a new expense using the designation and the value that we pass in.
+      if (type === 'exp') {
+        newItem = new Expense(ID, des, val);
+        // if the string is "inc", then we want to create a new income object based on the income function constructor.
+      } else if (type === 'inc') {
+        newItem = new Income(ID, des, val);
+      }
+      //push it into our data structure
+      data.allItems[type].push(newItem);
+      //need to return newItem because then the other module or the other function that's going to call this one can have direct access to the item we just created.
+      return newItem;
+    },
+    testing: function() {
+      console.log(data);
+    }
+  };
 
 
 })();
@@ -68,15 +121,26 @@ var controller = (function (budgetCtrl, UICtrl) {
     })
   }
   var ctrlAddItem = function () {
+    var input, newItem;
     // 1. Get the field input data
-    var input = UICtrl.getinput();
+    input = UICtrl.getinput();
     console.log(input);
     // 2. Add the item to the budget controller
+    newItem = budgetCtrl.addItem(input.type, input.description, input.value);
+
     // 3. Add the item to the UI
     // 4. Calculate the budget
     // 5. Display the budget on the UI
   };
+
+  return {
+    init: function () {
+      console.log("Application has started");
+      setupEventListeners();
+    }
+  }
+
 })(budgetController, UIController);
 
-
+controller.init();
 
