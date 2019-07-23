@@ -40,6 +40,13 @@ var budgetController = (function () {
     this.description = description;
     this.value = value;
   };
+  calculateTotal = function(type) {
+    var sum = 0;
+    data.allItems[type].forEach(function(cur){
+      sum += cur.value;
+    });
+    data.totals[type] = sum
+  }
   // data object structure for creating a new item 
   var data = {
     allItems: {
@@ -49,7 +56,10 @@ var budgetController = (function () {
     totals: {
       exp: 0,
       inc: 0
-    }
+    },
+    budget: 0,
+    // set to -1 incase the value is nonexistent; if there are no budget values and no total expenses on incomes, then there cannot be a percentage
+    percentage: -1
   };
   //this is for our public methods
   return {
@@ -76,6 +86,30 @@ var budgetController = (function () {
       data.allItems[type].push(newItem);
       //need to return newItem because then the other module or the other function that's going to call this one can have direct access to the item we just created.
       return newItem;
+    },
+    calculateBudget: function() {
+      // calculate total income and expenses
+      calculateTotal('exp');
+      calculateTotal('inc');
+
+      // calculate the budget: income - expenses
+      data.budget = data.totals.inc - data.totals.exp;
+      // calculate the percentage of income that we spent
+      if(data.totals.inc > 0) {
+
+        data.percentage = Math.round((data.totals.exp / data.totals.inc) * 100);
+      } else{
+        data.percentage = -1;
+      }
+    },
+    //this method is crucial for returning something from our data structure or module so you get used to this philosophy of having functions that only retrieve or set data.
+    getBudget: function() {
+      return {
+        budget: data.budget, 
+        totalInc: data.totals.inc,
+        totalExp: data.totals.exp,
+        percentage: data.percentage
+      }
     },
     testing: function () {
       console.log(data);
@@ -157,10 +191,11 @@ var controller = (function (budgetCtrl, UICtrl) {
   }
   var updateBudget = function () {
     // 1. Calculate the budget
-
+    budgetCtrl.calculateBudget();
     // 2. Return the budget
-
-    // 3. Display the budget on the UI
+      var budget = budgetCtrl.getBudget();
+      console.log(budget);
+      // 3. Display the budget on the UI
   };
 
   var ctrlAddItem = function () {
