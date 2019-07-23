@@ -57,11 +57,11 @@ var budgetController = (function () {
       var newItem, ID
       //unique number we want to assign to each new item that we put either in the income or expense array for the allitems
       //Create new ID
-      if(data.allItems[type].length > 0) {
+      if (data.allItems[type].length > 0) {
 
         ID = data.allItems[type][data.allItems[type].length - 1].id + 1;
         console.log(ID);
-      }else{
+      } else {
         ID = 0;
         console.log(ID);
       }
@@ -77,7 +77,7 @@ var budgetController = (function () {
       //need to return newItem because then the other module or the other function that's going to call this one can have direct access to the item we just created.
       return newItem;
     },
-    testing: function() {
+    testing: function () {
       console.log(data);
     }
   };
@@ -89,7 +89,9 @@ var UIController = (function () {
     inputType: '.add__type',
     inputDescription: '.add__description',
     inputValue: '.add__value',
-    inputBtn: '.add__btn'
+    inputBtn: '.add__btn',
+    incomeContainer: '.income__list',
+    expensesContainer: '.expenses__list'
   }
   //writing a method/function that will be used in another controller. We make this public method/function. It has to be in this iife that will return.
   return {
@@ -99,6 +101,39 @@ var UIController = (function () {
         description: document.querySelector(DOMstrings.inputDescription).value,
         value: document.querySelector(DOMstrings.inputValue).value
       }
+    },
+    addListItem: function (obj, type) {
+      var html, newHtml, element;
+      //Create HTML string with placeholder text
+      if (type === 'inc') {
+        element = DOMstrings.incomeContainer;
+        html = '<div class="item clearfix" id="income-%id%"><div class="item__description">%description%</div><div class="right clearfix"><div class="item__value">%value%</div><div class="item__delete"><button class="item__delete--btn"><i class="ion-ios-close-outline"></i></button></div></div></div>';
+      } else if (type === 'exp') {
+        element = DOMstrings.expensesContainer;
+        html = '<div class="item clearfix" id="expense-%id%"><div class="item__description">%description%</div><div class="right clearfix"><div class="item__value">%value%</div><div class="item__percentage">21%</div><div class="item__delete"><button class="item__delete--btn"><i class="ion-ios-close-outline"></i></button></div></div></div>';
+      }
+
+      //replace the placeholder text with some actual data
+      newHtml = html.replace('%id%', obj.id);
+      newHtml = newHtml.replace('%description%', obj.description);
+      newHtml = newHtml.replace('%value%', obj.value);
+      //Insert the html into the DOM
+      document.querySelector(element).insertAdjacentHTML('beforeend', newHtml);
+    },
+    clearFields: function () {
+      var fields, fieldArr;
+      // does not return a array
+      fields = document.querySelectorAll(DOMstrings.inputDescription + ', ' + DOMstrings.inputValue);
+      console.log(fields);
+      // convert list to an array 
+      fieldArr = Array.prototype.slice.call(fields);
+      console.log(fieldArr);
+
+      fieldArr.forEach(function (current, index, array) {
+        current.value = "";
+
+      })
+      fieldArr[0].focus();
     },
     //exposing the DOMstrings object into the public
     getDOMstrings: function () {
@@ -129,8 +164,11 @@ var controller = (function (budgetCtrl, UICtrl) {
     newItem = budgetCtrl.addItem(input.type, input.description, input.value);
 
     // 3. Add the item to the UI
-    // 4. Calculate the budget
-    // 5. Display the budget on the UI
+    UICtrl.addListItem(newItem, input.type);
+    // 4. clear the fields
+    UICtrl.clearFields();
+    // 5. Calculate the budget
+    // 6. Display the budget on the UI
   };
 
   return {
