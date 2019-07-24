@@ -1,32 +1,3 @@
-// var budgetController = (function(){
-
-//     var x = 23;
-
-//     var add = function(a) {
-//       return x + a;
-//     }
-//     return {
-//       publicTest: function(b) {
-//         return (add(b));
-//       } 
-//     }
-// })();
-
-// var UIController = (function(){
-// //Some code
-
-// })();
-// var controller = (function(budgetCtrl,UICtrl){
-
-//  var z = budgetController.publicTest(5)
-//  return {
-//    anotherPublic: function() {
-//      console.log(z);
-//    }
-//  }
-
-// })(budgetController, UIController);
-
 var budgetController = (function () {
   //Need a data model for expenses and incomes here. 
   //I chose to create objects here through the expense function constructor because there will be alot of expenses.
@@ -129,7 +100,8 @@ var UIController = (function () {
     budgetLabel: '.budget__value',
     incomeLabel: '.budget__income--value',
     expenseLabel: '.budget__expenses--value',
-    percentageLabel: '.budget__expenses--percentage'
+    percentageLabel: '.budget__expenses--percentage',
+    container: '.container'
   }
   //writing a method/function that will be used in another controller. We make this public method/function. It has to be in this iife that will return.
   return {
@@ -145,10 +117,10 @@ var UIController = (function () {
       //Create HTML string with placeholder text
       if (type === 'inc') {
         element = DOMstrings.incomeContainer;
-        html = '<div class="item clearfix" id="income-%id%"><div class="item__description">%description%</div><div class="right clearfix"><div class="item__value">%value%</div><div class="item__delete"><button class="item__delete--btn"><i class="ion-ios-close-outline"></i></button></div></div></div>';
+        html = '<div class="item clearfix" id="inc-%id%"><div class="item__description">%description%</div><div class="right clearfix"><div class="item__value">%value%</div><div class="item__delete"><button class="item__delete--btn"><i class="ion-ios-close-outline"></i></button></div></div></div>';
       } else if (type === 'exp') {
         element = DOMstrings.expensesContainer;
-        html = '<div class="item clearfix" id="expense-%id%"><div class="item__description">%description%</div><div class="right clearfix"><div class="item__value">%value%</div><div class="item__percentage">21%</div><div class="item__delete"><button class="item__delete--btn"><i class="ion-ios-close-outline"></i></button></div></div></div>';
+        html = '<div class="item clearfix" id="exp-%id%"><div class="item__description">%description%</div><div class="right clearfix"><div class="item__value">%value%</div><div class="item__percentage">21%</div><div class="item__delete"><button class="item__delete--btn"><i class="ion-ios-close-outline"></i></button></div></div></div>';
       }
 
       //replace the placeholder text with some actual data
@@ -204,7 +176,9 @@ var controller = (function (budgetCtrl, UICtrl) {
       if (event.keyCode === 13 || event.which === 13) {
         ctrlAddItem();
       }
-    })
+    });
+    //Starting Event Delegation for deleting expenses and incomes
+    document.querySelector(DOM.container).addEventListener('click', ctrlDeleteItem);
   }
   var updateBudget = function () {
     // 1. Calculate the budget
@@ -238,6 +212,25 @@ var controller = (function (budgetCtrl, UICtrl) {
       alert("Please enter valid string and number");
     };
   };
+  // in event delegation, an event bubbles up, and then we can know where it came from by looking at the target property of the event.
+  var ctrlDeleteItem = function(event) {
+    var itemID, splitID, type, ID;
+  itemID = event.target.parentNode.parentNode.parentNode.parentNode.id
+  if(itemID) {
+    //inc-1
+    splitID = itemID.split('-');
+    
+    type = splitID[0];
+  
+    ID = splitID[1];
+    
+    // 1. delete the item from the data structure
+
+    // 2. Delete the item from the UI
+
+    // 3. Update and show the new budget
+  }
+  }
 
   return {
     init: function () {
