@@ -163,6 +163,14 @@ var UIController = (function () {
     return (type === 'exp' ? '-' : '+') + ' ' + int + '.' + dec;
 
   };
+  //Private function, so only the methods that are in here, in this control module can use this function
+  var nodeListForEach = function (list, callback) {
+    // each iteration it calls our call back function. When we call our nodeListForEach function, we pass a callback function into it. 
+    for (var i = 0; i < list.length; i++) {
+      callback(list[i], i);
+      console.log(list);
+    }
+  };
   //writing a method/function that will be used in another controller. We make this public method/function. It has to be in this iife that will return.
   return {
     getinput: function () {
@@ -231,15 +239,7 @@ var UIController = (function () {
     displayPercentages: function (percentages) {
       var fields = document.querySelectorAll(DOMstrings.expensesPercLabel);
       console.log(fields);
-      var NodeListForEach = function (list, callback) {
-        // each iteration it calls our call back function. When we call our nodeListForEach function, we pass a callback function into it. 
-        for (var i = 0; i < list.length; i++) {
-          callback(list[i], i);
-          console.log(list);
-        }
-      };
-
-      NodeListForEach(fields, function (current, index) {
+      nodeListForEach(fields, function (current, index) {
         if (percentages[index] > 0) {
           current.textContent = percentages[index] + '%';
 
@@ -277,9 +277,17 @@ var UIController = (function () {
       document.querySelector(DOMstrings.dateLabel).textContent = months[month] + ' ' + year;
 
     },
+    changedType: function() {
+      var fields = document.querySelectorAll(DOMstrings.inputType + ',' + DOMstrings.inputDescription + ',' + DOMstrings.inputValue);
+      console.log(fields);
+      nodeListForEach(fields, function(cur){
+        cur.classList.toggle('red-focus');
+      });
+      document.querySelector(DOMstrings.inputBtn).classList.toggle('red');
+    },
     //exposing the DOMstrings object into the public
     getDOMstrings: function () {
-      return DOMstrings;
+      return DOMstrings; 
     }
   };
 })();
@@ -298,6 +306,7 @@ var controller = (function (budgetCtrl, UICtrl) {
     });
     //Starting Event Delegation for deleting expenses and incomes. We used the container element primarily for this reason. Later we do dom traversing to move up to the parent element.
     document.querySelector(DOM.container).addEventListener('click', ctrlDeleteItem);
+    document.querySelector(DOM.inputType).addEventListener('change', UICtrl.changedType);
   }
   var updateBudget = function () {
     // 1. Calculate the budget
