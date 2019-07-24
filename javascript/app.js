@@ -5,18 +5,18 @@ var budgetController = (function () {
     this.id = id;
     this.description = description;
     this.value = value;
-    this.percentage = -1; 
+    this.percentage = -1;
   };
   // calculates percentage for each expense
-  Expense.prototype.calcPercentage = function(totalIncome) {
-    if(totalIncome > 0) {
+  Expense.prototype.calcPercentage = function (totalIncome) {
+    if (totalIncome > 0) {
       this.percentage = Math.round((this.value / totalIncome) * 100);
-    }else{
+    } else {
       this.percentage = -1;
     }
   }
   // returns the percentage for each expense
-  Expense.prototype.getPercentage = function() {
+  Expense.prototype.getPercentage = function () {
     return this.percentage;
   }
   var Income = function (id, description, value) {
@@ -101,13 +101,13 @@ var budgetController = (function () {
     },
     // calculate the expense percentage for each of the expense object that are stored in the expense array.
     calculatePercentages: function () {
-      data.allItems.exp.forEach(function(cur){
+      data.allItems.exp.forEach(function (cur) {
         cur.calcPercentage(data.totals.inc);
       })
 
     },
-    getPercentages: function() {
-      var allPerc = data.allItems.exp.map(function(cur){
+    getPercentages: function () {
+      var allPerc = data.allItems.exp.map(function (cur) {
         return cur.getPercentage();
       });
       return allPerc;
@@ -141,8 +141,28 @@ var UIController = (function () {
     expenseLabel: '.budget__expenses--value',
     percentageLabel: '.budget__expenses--percentage',
     container: '.container',
-    expensesPercLabel: '.item__percentage'
-  }
+    expensesPercLabel: '.item__percentage',
+    dateLabel: ".budget__title--month"
+  };
+  // setting + or - before number, exactly 2 decimal points, comma seperating the thousands
+  var formatNumber = function (num, type) {
+    var numSplit, int, dec;
+    num = Math.abs(num);
+    num = num.toFixed(2);
+
+    numSplit = num.split('.');
+
+    int = numSplit[0];
+
+    if (int.length > 3) {
+      int = int.substr(0, int.length - 3) + ',' + int.substr(int.length - 3, 3)
+    }
+    dec = numSplit[1];
+    //ternary operator used for selecting a + or - based on the type
+
+    return (type === 'exp' ? '-' : '+') + ' ' + int + '.' + dec;
+
+  };
   //writing a method/function that will be used in another controller. We make this public method/function. It has to be in this iife that will return.
   return {
     getinput: function () {
@@ -166,7 +186,8 @@ var UIController = (function () {
       //replace the placeholder text with some actual data
       newHtml = html.replace('%id%', obj.id);
       newHtml = newHtml.replace('%description%', obj.description);
-      newHtml = newHtml.replace('%value%', obj.value);
+      // passing the result of formatting this number. THE FORMATNUMBER FUNCTION WILL BE CALLED WITH OUR VALUE, AND WITH THE TYPE WILL BE FORMATTED AND RETURNED AND THEN REPLACED WITH OUR STRING.
+      newHtml = newHtml.replace('%value%', formatNumber(obj.value, type));
       //Insert the html into the DOM
       document.querySelector(element).insertAdjacentHTML('beforeend', newHtml);
     },
@@ -192,9 +213,11 @@ var UIController = (function () {
       fieldArr[0].focus();
     },
     displayBudget: function (obj) {
-      document.querySelector(DOMstrings.budgetLabel).textContent = obj.budget;
-      document.querySelector(DOMstrings.incomeLabel).textContent = obj.totalInc;
-      document.querySelector(DOMstrings.expenseLabel).textContent = obj.totalExp;
+      var type;
+      obj.budget > 0 ? type = 'inc' : type = 'exp';
+      document.querySelector(DOMstrings.budgetLabel).textContent = formatNumber(obj.budget, type);
+      document.querySelector(DOMstrings.incomeLabel).textContent = formatNumber(obj.totalInc, 'inc');
+      document.querySelector(DOMstrings.expenseLabel).textContent = formatNumber(obj.totalExp, 'exp');
 
 
       if (obj.percentage > 0) {
@@ -204,22 +227,55 @@ var UIController = (function () {
         document.querySelector(DOMstrings.percentageLabel).textContent = '---';
       }
     },
-    displayPercentages: function(percentages) {
+    //nodelist does not have the for each method
+    displayPercentages: function (percentages) {
       var fields = document.querySelectorAll(DOMstrings.expensesPercLabel);
-      var NodeListForEach = function(list, callback) {
-        for(var i = 0; i < list.length; i++) {
+      console.log(fields);
+      var NodeListForEach = function (list, callback) {
+        // each iteration it calls our call back function. When we call our nodeListForEach function, we pass a callback function into it. 
+        for (var i = 0; i < list.length; i++) {
           callback(list[i], i);
+          console.log(list);
         }
       };
 
-      NodeListForEach(fields, function(current, index){
-        if(percentages[index] > 0) {
+      NodeListForEach(fields, function (current, index) {
+        if (percentages[index] > 0) {
           current.textContent = percentages[index] + '%';
 
-        }else{
+        } else {
           current.textContent = '---';
         }
       })
+    },
+    // // setting + or - before number, exactly 2 decimal points, comma seperating the thousands
+    // formatNumber: function(num, type) {
+    //   var numSplit, int, dec;
+    //   num = Math.abs(num);
+    //   num = num.toFixed(2);
+
+    //   numSplit = num.split('.');
+
+    //   int = numSplit[0];
+
+    //   if(int.length > 3) {
+    //     int = int.substr(0, int.length-3) + ',' + int.substr(int.length-3,3) 
+    //   } 
+    //   dec = numSplit[1];
+    //   //ternary operator used for selecting a + or - based on the type
+
+    //   return (type === 'exp' ? sign '-' : sign  '+') + ' ' + int + dec;
+
+    // },
+    displayMonth: function () {
+      var now, year, month;
+      now = new Date();
+      months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+      month = now.getMonth();
+       // year is now and this object inherits many methods from the date prototype
+      year = now.getFullYear();
+      document.querySelector(DOMstrings.dateLabel).textContent = months[month] + ' ' + year;
+
     },
     //exposing the DOMstrings object into the public
     getDOMstrings: function () {
@@ -277,7 +333,7 @@ var controller = (function (budgetCtrl, UICtrl) {
       // 4. clear the fields
       UICtrl.clearFields();
 
-      // 5. Calculate and update budget
+      // 5. Calculate and update budget 
       updateBudget();
 
       // 6. Calculate and update percentages
@@ -315,6 +371,7 @@ var controller = (function (budgetCtrl, UICtrl) {
   return {
     init: function () {
       console.log("Application has started");
+      UICtrl.displayMonth();
       UICtrl.displayBudget({
         budget: 0,
         totalInc: 0,
