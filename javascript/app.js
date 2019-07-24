@@ -5,7 +5,20 @@ var budgetController = (function () {
     this.id = id;
     this.description = description;
     this.value = value;
+    this.percentage = -1; 
   };
+  // calculates percentage for each expense
+  Expense.prototype.calcPercentage = function(totalIncome) {
+    if(totalIncome > 0) {
+      this.percentage = Math.round((this.value / totalIncome) * 100);
+    }else{
+      this.percentage = -1;
+    }
+  }
+  // returns the percentage for each expense
+  Expense.prototype.getPercentage = function() {
+    return this.percentage;
+  }
   var Income = function (id, description, value) {
     this.id = id;
     this.description = description;
@@ -63,7 +76,7 @@ var budgetController = (function () {
     },
     deleteItem: function (type, id) {
       var ids, index;
-      ids = data.allItems[type].map(function(current) {
+      ids = data.allItems[type].map(function (current) {
         return current.id;
       })
       index = ids.indexOf(id);
@@ -85,6 +98,19 @@ var budgetController = (function () {
       } else {
         data.percentage = -1;
       }
+    },
+    // calculate the expense percentage for each of the expense object that are stored in the expense array.
+    calculatePercentages: function () {
+      data.allItems.exp.forEach(function(cur){
+        cur.calcPercentage(data.totals.inc);
+      })
+
+    },
+    getPercentages: function() {
+      var allPerc = data.allItems.exp.map(function(cur){
+        return cur.getPercentage();
+      });
+      return allPerc;
     },
     //this method is crucial for returning something from our data structure or module so you get used to this philosophy of having functions that only retrieve or set data.
     getBudget: function () {
@@ -114,7 +140,8 @@ var UIController = (function () {
     incomeLabel: '.budget__income--value',
     expenseLabel: '.budget__expenses--value',
     percentageLabel: '.budget__expenses--percentage',
-    container: '.container'
+    container: '.container',
+    expensesPercLabel: '.item__percentage'
   }
   //writing a method/function that will be used in another controller. We make this public method/function. It has to be in this iife that will return.
   return {
@@ -144,8 +171,8 @@ var UIController = (function () {
       document.querySelector(element).insertAdjacentHTML('beforeend', newHtml);
     },
 
-    deleteListItem: function(selectorID) {
-      var el =  document.getElementById(selectorID);
+    deleteListItem: function (selectorID) {
+      var el = document.getElementById(selectorID);
       el.parentNode.removeChild(el);
     },
 
@@ -176,6 +203,23 @@ var UIController = (function () {
       else {
         document.querySelector(DOMstrings.percentageLabel).textContent = '---';
       }
+    },
+    displayPercentages: function(percentages) {
+      var fields = document.querySelectorAll(DOMstrings.expensesPercLabel);
+      var NodeListForEach = function(list, callback) {
+        for(var i = 0; i < list.length; i++) {
+          callback(list[i], i);
+        }
+      };
+
+      NodeListForEach(fields, function(current, index){
+        if(percentages[index] > 0) {
+          current.textContent = percentages[index] + '%';
+
+        }else{
+          current.textContent = '---';
+        }
+      })
     },
     //exposing the DOMstrings object into the public
     getDOMstrings: function () {
@@ -209,6 +253,16 @@ var controller = (function (budgetCtrl, UICtrl) {
     UICtrl.displayBudget(budget);
   };
 
+  var updatePercentages = function () {
+    // 1. Calculate percentages
+    budgetCtrl.calculatePercentages()
+    // 2. Read percentages from the budget controller
+    var percentages = budgetCtrl.getPercentages();
+    // 3. Update the UI with the new percentages
+    console.log(percentages);
+    UICtrl.displayPercentages(percentages);
+  };
+
   var ctrlAddItem = function () {
     var input, newItem;
     // 1. Get the field input data
@@ -225,6 +279,9 @@ var controller = (function (budgetCtrl, UICtrl) {
 
       // 5. Calculate and update budget
       updateBudget();
+
+      // 6. Calculate and update percentages
+      updatePercentages();
     }
     else {
 
@@ -249,7 +306,8 @@ var controller = (function (budgetCtrl, UICtrl) {
       UICtrl.deleteListItem(itemID);
       // 3. Update and show the new budget
       updateBudget();
-
+      // 4. Calculate and update percentages
+      updatePercentages();
     }
   }
 
