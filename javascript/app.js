@@ -11,9 +11,9 @@ var budgetController = (function () {
     this.description = description;
     this.value = value;
   };
-  calculateTotal = function(type) {
+  calculateTotal = function (type) {
     var sum = 0;
-    data.allItems[type].forEach(function(cur){
+    data.allItems[type].forEach(function (cur) {
       sum += cur.value;
     });
     data.totals[type] = sum
@@ -36,6 +36,9 @@ var budgetController = (function () {
   return {
     addItem: function (type, des, val) {
       var newItem, ID
+      // [1 2 3 4 5 6], next ID = 6
+      // [1 2 4 6 8], next ID = 9
+      // ID = last ID + 1
       //unique number we want to assign to each new item that we put either in the income or expense array for the allitems
       //Create new ID
       if (data.allItems[type].length > 0) {
@@ -58,7 +61,17 @@ var budgetController = (function () {
       //need to return newItem because then the other module or the other function that's going to call this one can have direct access to the item we just created.
       return newItem;
     },
-    calculateBudget: function() {
+    deleteItem: function (type, id) {
+      var ids, index;
+      ids = data.allItems[type].map(function(current) {
+        return current.id;
+      })
+      index = ids.indexOf(id);
+      if (index !== -1) {
+        data.allItems[type].splice(index, 1)
+      }
+    },
+    calculateBudget: function () {
       // calculate total income and expenses
       calculateTotal('exp');
       calculateTotal('inc');
@@ -66,17 +79,17 @@ var budgetController = (function () {
       // calculate the budget: income - expenses
       data.budget = data.totals.inc - data.totals.exp;
       // calculate the percentage of income that we spent
-      if(data.totals.inc > 0) {
+      if (data.totals.inc > 0) {
 
         data.percentage = Math.round((data.totals.exp / data.totals.inc) * 100);
-      } else{
+      } else {
         data.percentage = -1;
       }
     },
     //this method is crucial for returning something from our data structure or module so you get used to this philosophy of having functions that only retrieve or set data.
-    getBudget: function() {
+    getBudget: function () {
       return {
-        budget: data.budget, 
+        budget: data.budget,
         totalInc: data.totals.inc,
         totalExp: data.totals.exp,
         percentage: data.percentage
@@ -145,16 +158,16 @@ var UIController = (function () {
       })
       fieldArr[0].focus();
     },
-    displayBudget: function(obj) {
+    displayBudget: function (obj) {
       document.querySelector(DOMstrings.budgetLabel).textContent = obj.budget;
       document.querySelector(DOMstrings.incomeLabel).textContent = obj.totalInc;
       document.querySelector(DOMstrings.expenseLabel).textContent = obj.totalExp;
-      
 
-      if(obj.percentage > 0) {
+
+      if (obj.percentage > 0) {
         document.querySelector(DOMstrings.percentageLabel).textContent = obj.percentage + '%';
       }
-      else{
+      else {
         document.querySelector(DOMstrings.percentageLabel).textContent = '---';
       }
     },
@@ -177,16 +190,16 @@ var controller = (function (budgetCtrl, UICtrl) {
         ctrlAddItem();
       }
     });
-    //Starting Event Delegation for deleting expenses and incomes
+    //Starting Event Delegation for deleting expenses and incomes. We used the container element primarily for this reason. Later we do dom traversing to move up to the parent element.
     document.querySelector(DOM.container).addEventListener('click', ctrlDeleteItem);
   }
   var updateBudget = function () {
     // 1. Calculate the budget
     budgetCtrl.calculateBudget();
     // 2. Return the budget
-      var budget = budgetCtrl.getBudget();
-      console.log(budget);
-      // 3. Display the budget on the UI
+    var budget = budgetCtrl.getBudget();
+    console.log(budget);
+    // 3. Display the budget on the UI
     UICtrl.displayBudget(budget);
   };
 
@@ -195,51 +208,51 @@ var controller = (function (budgetCtrl, UICtrl) {
     // 1. Get the field input data
     input = UICtrl.getinput();
     console.log(input);
-    if(input.description !== "" && !isNaN(input.value) && input.value > 0){
+    if (input.description !== "" && !isNaN(input.value) && input.value > 0) {
       // 2. Add the item to the budget controller
       newItem = budgetCtrl.addItem(input.type, input.description, input.value);
-      
+
       // 3. Add the item to the UI
       UICtrl.addListItem(newItem, input.type);
       // 4. clear the fields
       UICtrl.clearFields();
-      
+
       // 5. Calculate and update budget
       updateBudget();
     }
-    else{
-      
+    else {
+
       alert("Please enter valid string and number");
     };
   };
   // in event delegation, an event bubbles up, and then we can know where it came from by looking at the target property of the event.
-  var ctrlDeleteItem = function(event) {
+  var ctrlDeleteItem = function (event) {
     var itemID, splitID, type, ID;
-  itemID = event.target.parentNode.parentNode.parentNode.parentNode.id
-  if(itemID) {
-    //inc-1
-    splitID = itemID.split('-');
-    
-    type = splitID[0];
-  
-    ID = splitID[1];
-    
-    // 1. delete the item from the data structure
+    itemID = event.target.parentNode.parentNode.parentNode.parentNode.id
+    if (itemID) {
+      //inc-1
+      splitID = itemID.split('-');
 
-    // 2. Delete the item from the UI
+      type = splitID[0];
+      // convert to integer because you are comparing the ID to a number
+      ID = parseInt(splitID[1]);
 
-    // 3. Update and show the new budget
-  }
+      // 1. delete the item from the data structure
+      budgetCtrl.deleteItem(type, ID)
+      // 2. Delete the item from the UI
+
+      // 3. Update and show the new budget
+    }
   }
 
   return {
     init: function () {
       console.log("Application has started");
       UICtrl.displayBudget({
-        budget: 0, 
-        totalInc:0,
+        budget: 0,
+        totalInc: 0,
         totalExp: 0,
-        percentage:-1
+        percentage: -1
       });
       setupEventListeners();
     }
